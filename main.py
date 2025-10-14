@@ -4,6 +4,9 @@ from typing import Annotated, List, Optional
 from datetime import timedelta
 from fastapi.middleware.cors import CORSMiddleware
 import models, schemas, crud, auth, database
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 models.Base.metadata.create_all(bind=database.engine)
 
