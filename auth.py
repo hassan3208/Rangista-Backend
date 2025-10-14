@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 
+
 import crud, models, schemas, database
 
 SECRET_KEY = os.getenv("SECRET_KEY")
