@@ -10,7 +10,7 @@ models.Base.metadata.create_all(bind=database.engine)
 origins = [
     "http://localhost:8080",  # your frontend URL
     "http://127.0.0.1:8080",  # If using Vite
-    "https://rangista.vercel.app",
+    os.getenv("FRONTEND_URL", "https://rangista.vercel.app"),
     # Add your deployed frontend URL later
 ]
 
