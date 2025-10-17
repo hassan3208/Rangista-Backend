@@ -845,22 +845,14 @@
 #     ).first()
 #     return review is not None
 
-
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-import models, schemas
-from models import User, Order, Product, Token
-from passlib.context import CryptContext
+from datetime import datetime
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, case
 from datetime import date
 from typing import Optional
 from fastapi import HTTPException
-import logging
-from jose import jwt, JWTError
-import os
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from passlib.context import CryptContext
+import models, schemas
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -877,79 +869,64 @@ def get_user_by_login(db: Session, login: str):
 def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
-def get_user_by_email(db: Session, email: str): 
-    return db.query(models.User).filter(models.User.email == email).first()  
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 def get_all_users(db: Session):
     return db.query(models.User).all()
 
-def create_user(db: Session, user: schemas.UserCreate): 
-    hashed_password = pwd_context.hash(user.password) 
-    db_user = models.User( 
-        name=user.name, 
-        username=user.username, 
-        email=user.email, 
-        hashed_password=hashed_password, 
-        disabled=False, 
-        contact_number=user.contact_number, 
-        permanent_address=user.permanent_address, 
-        country=user.country, 
-        city=user.city, 
+def create_user(db: Session, user: schemas.UserCreate):
+    hashed_password = pwd_context.hash(user.password)
+    db_user = models.User(
+        name=user.name,
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password,
+        disabled=False,
+        contact_number=user.contact_number,
+        permanent_address=user.permanent_address,
+        country=user.country,
+        city=user.city,
         contact_number_2=user.contact_number_2
-    ) 
-    db.add(db_user) 
-    db.commit() 
-    db.refresh(db_user) 
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
     return db_user
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-def update_user(db: Session, db_user: models.User, updates: schemas.UserUpdate): 
-    if updates.email is not None: 
-        db_user.email = updates.email 
-    if updates.full_name is not None: 
-        db_user.name = updates.full_name 
-    if updates.disabled is not None: 
-        db_user.disabled = updates.disabled 
-    if updates.contact_number is not None: 
-        db_user.contact_number = updates.contact_number 
-    if updates.permanent_address is not None: 
-        db_user.permanent_address = updates.permanent_address 
-    if updates.country is not None: 
-        db_user.country = updates.country 
-    if updates.city is not None: 
-        db_user.city = updates.city 
-    if updates.contact_number_2 is not None: 
+def update_user(db: Session, db_user: models.User, updates: schemas.UserUpdate):
+    if updates.email is not None:
+        db_user.email = updates.email
+    if updates.full_name is not None:
+        db_user.name = updates.full_name
+    if updates.disabled is not None:
+        db_user.disabled = updates.disabled
+    if updates.contact_number is not None:
+        db_user.contact_number = updates.contact_number
+    if updates.permanent_address is not None:
+        db_user.permanent_address = updates.permanent_address
+    if updates.country is not None:
+        db_user.country = updates.country
+    if updates.city is not None:
+        db_user.city = updates.city
+    if updates.contact_number_2 is not None:
         db_user.contact_number_2 = updates.contact_number_2
-    db.commit() 
-    db.refresh(db_user) 
+    db.commit()
+    db.refresh(db_user)
     return db_user
 
 # -------------------------
 # TOKEN FUNCTIONS
 # -------------------------
 def create_token(db: Session, user_id: int, token: str, token_type: str):
-    try:
-        logger.debug(f"Creating {token_type} token for user_id: {user_id}")
-        # Delete existing token of the same type for the user
-        db.query(models.Token).filter(
-            models.Token.user_id == user_id,
-            models.Token.token_type == token_type
-        ).delete()
-        db.commit()
-        logger.debug(f"Deleted existing {token_type} token")
-        # Create new token
-        db_token = models.Token(user_id=user_id, token=token, token_type=token_type)
-        db.add(db_token)
-        db.commit()
-        db.refresh(db_token)
-        logger.debug(f"{token_type.capitalize()} token added to DB")
-        return db_token
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Failed to create {token_type} token: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to create {token_type} token: {str(e)}")
+    db_token = models.Token(user_id=user_id, token=token, token_type=token_type)
+    db.add(db_token)
+    db.commit()
+    db.refresh(db_token)
+    return db_token
 
 def get_token(db: Session, token: str, token_type: str):
     return db.query(models.Token).filter(
@@ -958,42 +935,11 @@ def get_token(db: Session, token: str, token_type: str):
     ).first()
 
 def delete_token(db: Session, token: str, token_type: str):
-    try:
-        logger.debug(f"Attempting to delete {token_type} token: {token[:10]}...")
-        db_token = db.query(models.Token).filter(
-            models.Token.token == token,
-            models.Token.token_type == token_type
-        ).first()
-        if db_token:
-            db.delete(db_token)
-            db.commit()
-            logger.debug(f"{token_type.capitalize()} token deleted from DB")
-        else:
-            logger.warning(f"{token_type.capitalize()} token not found in DB")
-        return db_token
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Failed to delete {token_type} token: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete {token_type} token: {str(e)}")
-
-def cleanup_expired_tokens(db: Session):
-    try:
-        logger.debug("Cleaning up expired tokens")
-        tokens = db.query(models.Token).all()
-        deleted_count = 0
-        for token in tokens:
-            try:
-                jwt.decode(token.token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
-            except JWTError:
-                db.delete(token)
-                deleted_count += 1
-        db.commit()
-        logger.debug(f"Deleted {deleted_count} expired tokens")
-        return {"message": f"Deleted {deleted_count} expired tokens"}
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Failed to clean up expired tokens: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to clean up expired tokens: {str(e)}")
+    db.query(models.Token).filter(
+        models.Token.token == token,
+        models.Token.token_type == token_type
+    ).delete()
+    db.commit()
 
 # -------------------------
 # PRODUCT FUNCTIONS
@@ -1086,13 +1032,76 @@ def get_reviews_by_product(db: Session, product_id: str):
             username=r.username,
             stars=r.stars,
             text=r.text,
-            time=r.time,
+            time=r.time.date() if r.time else None,
         )
         for r in results
     ]
 
+
+def create_review(db: Session, review: schemas.ReviewCreate):
+    """
+    Create a new review for a product.
+    """
+    user = db.query(models.User).filter(models.User.id == review.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    product = db.query(models.Product).filter(models.Product.id == review.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Check if user has already reviewed this product
+    existing_review = db.query(models.Review).filter(
+        models.Review.user_id == review.user_id,
+        models.Review.product_id == review.product_id
+    ).first()
+    if existing_review:
+        raise HTTPException(status_code=400, detail="User has already reviewed this product")
+    
+    # Parse review.time as a full datetime
+    try:
+        review_time = datetime.fromisoformat(review.time.replace('Z', '+00:00'))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid time format: {str(e)}")
+    
+    db_review = models.Review(
+        stars=review.stars,
+        text=review.text,
+        time=review_time,  # Store full datetime
+        user_id=review.user_id,
+        product_id=review.product_id
+    )
+    db.add(db_review)
+    db.commit()
+    db.refresh(db_review)
+    return db_review
+
+def get_review_detail(db: Session, review_id: int):
+    """
+    Fetch details of a specific review by ID, including username, stars, text, and time.
+    """
+    result = (
+        db.query(
+            models.User.username,
+            models.Review.stars,
+            models.Review.text,
+            models.Review.time,
+        )
+        .join(models.Review, models.User.id == models.Review.user_id)
+        .filter(models.Review.id == review_id)
+        .first()
+    )
+    if not result:
+        return None
+    return schemas.ReviewDetail(
+        username=result.username,
+        stars=result.stars,
+        text=result.text,
+        time=result.time,  # Remove .date() since time is already compatible or needs datetime handling
+    )
+
 # -------------------------
-# GET ALL PRODUCTS IN USER CART
+# CART FUNCTIONS
 # -------------------------
 def get_user_cart(db: Session, user_id: int):
     """
@@ -1128,8 +1137,9 @@ def get_user_cart(db: Session, user_id: int):
             r.M_price if r.size == "M" else
             r.L_price if r.size == "L" else
             r.XL_price if r.size == "XL" else
-            r.XXL_price
-        )
+            r.XXL_price if r.size == "XXL" else 0
+        ) * r.quantity
+
         items.append(
             schemas.CartProduct(
                 product_name=r.product_name,
@@ -1143,274 +1153,9 @@ def get_user_cart(db: Session, user_id: int):
             )
         )
 
-    return schemas.CartResponse(
-        total_products=len(items),
-        items=items
-    )
+    total_products = len(items)
+    return schemas.CartResponse(total_products=total_products, items=items)
 
-# -------------------------
-# GET ALL ORDERS
-# -------------------------
-def get_all_orders(db: Session):
-    """
-    Fetch all orders with associated products, username, and total price.
-    """
-    results = (
-        db.query(models.Order)
-        .join(models.User, models.Order.user_id == models.User.id)
-        .all()
-    )
-
-    orders = []
-    for order in results:
-        items = (
-            db.query(
-                models.OrderItem.quantity,
-                models.OrderItem.size,
-                models.OrderItem.product_id,
-                models.Product.name.label("product_name"),
-                models.Product.XS_price,
-                models.Product.S_price,
-                models.Product.M_price,
-                models.Product.L_price,
-                models.Product.XL_price,
-                models.Product.XXL_price,
-            )
-            .join(models.Product, models.OrderItem.product_id == models.Product.id)
-            .filter(models.OrderItem.order_id == order.id)
-            .all()
-        )
-
-        order_products = []
-        total_price = 0
-        for item in items:
-            price = (
-                item.XS_price if item.size == "XS" else
-                item.S_price if item.size == "S" else
-                item.M_price if item.size == "M" else
-                item.L_price if item.size == "L" else
-                item.XL_price if item.size == "XL" else
-                item.XXL_price
-            )
-            total_price += price * item.quantity
-            order_products.append(
-                schemas.OrderProduct(
-                    product_name=item.product_name,
-                    quantity=item.quantity,
-                    size=item.size,
-                    product_id=item.product_id,
-                    price=price,
-                )
-            )
-
-        orders.append(
-            schemas.OrderResponse(
-                order_id=order.id,
-                user_id=order.user_id,
-                username=order.user.username,
-                status=order.status,
-                total_products=len(items),
-                total_price=total_price,
-                products=order_products,
-                order_time=order.time,
-            )
-        )
-    return orders
-
-# -------------------------
-# GET USER ORDERS
-# -------------------------
-def get_user_orders(db: Session, user_id: int):
-    """
-    Fetch all orders for a specific user with associated products, username, and total price.
-    """
-    results = (
-        db.query(models.Order)
-        .join(models.User, models.Order.user_id == models.User.id)
-        .filter(models.Order.user_id == user_id)
-        .all()
-    )
-
-    orders = []
-    for order in results:
-        items = (
-            db.query(
-                models.OrderItem.quantity,
-                models.OrderItem.size,
-                models.OrderItem.product_id,
-                models.Product.name.label("product_name"),
-                models.Product.XS_price,
-                models.Product.S_price,
-                models.Product.M_price,
-                models.Product.L_price,
-                models.Product.XL_price,
-                models.Product.XXL_price,
-            )
-            .join(models.Product, models.OrderItem.product_id == models.Product.id)
-            .filter(models.OrderItem.order_id == order.id)
-            .all()
-        )
-
-        order_products = []
-        total_price = 0
-        for item in items:
-            price = (
-                item.XS_price if item.size == "XS" else
-                item.S_price if item.size == "S" else
-                item.M_price if item.size == "M" else
-                item.L_price if item.size == "L" else
-                item.XL_price if item.size == "XL" else
-                item.XXL_price
-            )
-            total_price += price * item.quantity
-            order_products.append(
-                schemas.OrderProduct(
-                    product_name=item.product_name,
-                    quantity=item.quantity,
-                    size=item.size,
-                    product_id=item.product_id,
-                    price=price,
-                )
-            )
-
-        orders.append(
-            schemas.OrderResponse(
-                order_id=order.id,
-                user_id=order.user_id,
-                username=order.user.username,
-                status=order.status,
-                total_products=len(items),
-                total_price=total_price,
-                products=order_products,
-                order_time=order.time,
-            )
-        )
-    return orders
-
-# -------------------------
-# UPDATE ORDER STATUS
-# -------------------------
-def update_order_status(db: Session, order_id: int, status: str):
-    order = db.query(models.Order).filter(models.Order.id == order_id).first()
-    if order:
-        order.status = status
-        db.commit()
-        db.refresh(order)
-    return order
-
-# -------------------------
-# GET ORDER
-# -------------------------
-def get_order(db: Session, order_id: int):
-    order = (
-        db.query(models.Order)
-        .join(models.User, models.Order.user_id == models.User.id)
-        .filter(models.Order.id == order_id)
-        .first()
-    )
-    if not order:
-        return None
-
-    items = (
-        db.query(
-            models.OrderItem.quantity,
-            models.OrderItem.size,
-            models.OrderItem.product_id,
-            models.Product.name.label("product_name"),
-            models.Product.XS_price,
-            models.Product.S_price,
-            models.Product.M_price,
-            models.Product.L_price,
-            models.Product.XL_price,
-            models.Product.XXL_price,
-        )
-        .join(models.Product, models.OrderItem.product_id == models.Product.id)
-        .filter(models.OrderItem.order_id == order.id)
-        .all()
-    )
-
-    order_products = []
-    total_price = 0
-    for item in items:
-        price = (
-            item.XS_price if item.size == "XS" else
-            item.S_price if item.size == "S" else
-            item.M_price if item.size == "M" else
-            item.L_price if item.size == "L" else
-            item.XL_price if item.size == "XL" else
-            item.XXL_price
-        )
-        total_price += price * item.quantity
-        order_products.append(
-            schemas.OrderProduct(
-                product_name=item.product_name,
-                quantity=item.quantity,
-                size=item.size,
-                product_id=item.product_id,
-                price=price,
-            )
-        )
-
-    return schemas.OrderResponse(
-        order_id=order.id,
-        user_id=order.user_id,
-        username=order.user.username,
-        status=order.status,
-        total_products=len(items),
-        total_price=total_price,
-        products=order_products,
-        order_time=order.time,
-    )
-
-# -------------------------
-# CREATE REVIEW
-# -------------------------
-def create_review(db: Session, review: schemas.ReviewCreate):
-    product = db.query(models.Product).filter(models.Product.id == review.product_id).first()
-    if not product:
-        return None
-    user = db.query(models.User).filter(models.User.id == review.user_id).first()
-    if not user:
-        return None
-    db_review = models.Review(
-        stars=review.stars,
-        text=review.text,
-        time=date.fromisoformat(review.time),
-        user_id=review.user_id,
-        product_id=review.product_id
-    )
-    db.add(db_review)
-    db.commit()
-    db.refresh(db_review)
-    return db_review
-
-# -------------------------
-# GET REVIEW DETAIL
-# -------------------------
-def get_review_detail(db: Session, review_id: int):
-    result = (
-        db.query(
-            models.User.username,
-            models.Review.stars,
-            models.Review.text,
-            models.Review.time,
-        )
-        .join(models.Review, models.User.id == models.Review.user_id)
-        .filter(models.Review.id == review_id)
-        .first()
-    )
-    if not result:
-        return None
-    return schemas.ReviewDetail(
-        username=result.username,
-        stars=result.stars,
-        text=result.text,
-        time=result.time,
-    )
-
-# -------------------------
-# UPDATE CART QUANTITY
-# -------------------------
 def update_cart_quantity(db: Session, user_id: int, product_id: str, size: str, quantity: int):
     cart_item = db.query(models.Cart).filter(
         models.Cart.user_id == user_id,
@@ -1419,14 +1164,13 @@ def update_cart_quantity(db: Session, user_id: int, product_id: str, size: str, 
     ).first()
     if not cart_item:
         return None
+
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
-        return None
+        raise HTTPException(status_code=404, detail="Product not found")
 
-    # Calculate delta for stock deduction (only deduct if quantity is increasing)
     quantity_delta = quantity - cart_item.quantity
     if quantity_delta > 0:
-        # Verify stock for the additional quantity
         if size == "XS" and product.XS_stock < quantity_delta:
             raise HTTPException(status_code=400, detail="Insufficient XS stock")
         elif size == "S" and product.S_stock < quantity_delta:
@@ -1440,7 +1184,6 @@ def update_cart_quantity(db: Session, user_id: int, product_id: str, size: str, 
         elif size == "XXL" and product.XXL_stock < quantity_delta:
             raise HTTPException(status_code=400, detail="Insufficient XXL stock")
 
-        # Deduct stock
         if size == "XS":
             product.XS_stock -= quantity_delta
         elif size == "S":
@@ -1454,7 +1197,6 @@ def update_cart_quantity(db: Session, user_id: int, product_id: str, size: str, 
         elif size == "XXL":
             product.XXL_stock -= quantity_delta
     elif quantity_delta < 0:
-        # Add back to stock
         if size == "XS":
             product.XS_stock += abs(quantity_delta)
         elif size == "S":
@@ -1468,16 +1210,12 @@ def update_cart_quantity(db: Session, user_id: int, product_id: str, size: str, 
         elif size == "XXL":
             product.XXL_stock += abs(quantity_delta)
 
-    # Update quantity
     cart_item.quantity = quantity
     db.commit()
     db.refresh(cart_item)
     db.refresh(product)
     return cart_item
 
-# -------------------------
-# REMOVE FROM CART
-# -------------------------
 def remove_from_cart(db: Session, user_id: int, product_id: str, size: str):
     cart_item = db.query(models.Cart).filter(
         models.Cart.user_id == user_id,
@@ -1486,22 +1224,22 @@ def remove_from_cart(db: Session, user_id: int, product_id: str, size: str):
     ).first()
     if not cart_item:
         return None
+
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
-        return None
+        raise HTTPException(status_code=404, detail="Product not found")
 
-    # Add stock back
-    if size == "XS":
+    if cart_item.size == "XS":
         product.XS_stock += cart_item.quantity
-    elif size == "S":
+    elif cart_item.size == "S":
         product.S_stock += cart_item.quantity
-    elif size == "M":
+    elif cart_item.size == "M":
         product.M_stock += cart_item.quantity
-    elif size == "L":
+    elif cart_item.size == "L":
         product.L_stock += cart_item.quantity
-    elif size == "XL":
+    elif cart_item.size == "XL":
         product.XL_stock += cart_item.quantity
-    elif size == "XXL":
+    elif cart_item.size == "XXL":
         product.XXL_stock += cart_item.quantity
 
     db.delete(cart_item)
@@ -1509,15 +1247,11 @@ def remove_from_cart(db: Session, user_id: int, product_id: str, size: str):
     db.refresh(product)
     return True
 
-# -------------------------
-# ADD TO CART
-# -------------------------
 def add_to_cart(db: Session, cart_item: schemas.CartCreate):
     product = db.query(models.Product).filter(models.Product.id == cart_item.product_id).first()
     if not product:
-        return None
+        raise HTTPException(status_code=404, detail="Product not found")
 
-    # Check if the item already exists in the cart
     existing_cart_item = db.query(models.Cart).filter(
         models.Cart.user_id == cart_item.user_id,
         models.Cart.product_id == cart_item.product_id,
@@ -1525,10 +1259,8 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
     ).first()
 
     if existing_cart_item:
-        # Calculate delta for stock deduction (only deduct if quantity is increasing)
         quantity_delta = cart_item.quantity - existing_cart_item.quantity
         if quantity_delta > 0:
-            # Verify stock for the additional quantity
             if cart_item.size == "XS" and product.XS_stock < quantity_delta:
                 raise HTTPException(status_code=400, detail="Insufficient XS stock")
             elif cart_item.size == "S" and product.S_stock < quantity_delta:
@@ -1542,7 +1274,6 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
             elif cart_item.size == "XXL" and product.XXL_stock < quantity_delta:
                 raise HTTPException(status_code=400, detail="Insufficient XXL stock")
 
-            # Deduct stock
             if cart_item.size == "XS":
                 product.XS_stock -= quantity_delta
             elif cart_item.size == "S":
@@ -1555,8 +1286,8 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
                 product.XL_stock -= quantity_delta
             elif cart_item.size == "XXL":
                 product.XXL_stock -= quantity_delta
+
         elif quantity_delta < 0:
-            # Add back to stock
             if cart_item.size == "XS":
                 product.XS_stock += abs(quantity_delta)
             elif cart_item.size == "S":
@@ -1570,14 +1301,12 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
             elif cart_item.size == "XXL":
                 product.XXL_stock += abs(quantity_delta)
 
-        # Update quantity
         existing_cart_item.quantity = cart_item.quantity
         db.commit()
         db.refresh(existing_cart_item)
         db.refresh(product)
         return existing_cart_item
 
-    # For new item: Verify and deduct full stock
     if cart_item.size == "XS" and product.XS_stock < cart_item.quantity:
         raise HTTPException(status_code=400, detail="Insufficient XS stock")
     elif cart_item.size == "S" and product.S_stock < cart_item.quantity:
@@ -1591,7 +1320,6 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
     elif cart_item.size == "XXL" and product.XXL_stock < cart_item.quantity:
         raise HTTPException(status_code=400, detail="Insufficient XXL stock")
 
-    # Deduct stock
     if cart_item.size == "XS":
         product.XS_stock -= cart_item.quantity
     elif cart_item.size == "S":
@@ -1605,7 +1333,6 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
     elif cart_item.size == "XXL":
         product.XXL_stock -= cart_item.quantity
 
-    # Create new cart item
     db_cart_item = models.Cart(
         user_id=cart_item.user_id,
         product_id=cart_item.product_id,
@@ -1619,6 +1346,246 @@ def add_to_cart(db: Session, cart_item: schemas.CartCreate):
     return db_cart_item
 
 # -------------------------
+# ORDER FUNCTIONS
+# -------------------------
+def get_all_orders(db: Session):
+    """
+    Fetch all orders with product details, total products, and total price.
+    """
+    results = (
+        db.query(
+            models.Order.id.label("order_id"),
+            models.Order.user_id,
+            models.User.username,
+            models.Order.status,
+            models.Order.time.label("order_time"),
+            func.count(models.OrderItem.id).label("total_products"),
+            func.sum(
+                models.OrderItem.quantity * case(
+                    (models.OrderItem.size == "XS", models.Product.XS_price),
+                    (models.OrderItem.size == "S", models.Product.S_price),
+                    (models.OrderItem.size == "M", models.Product.M_price),
+                    (models.OrderItem.size == "L", models.Product.L_price),
+                    (models.OrderItem.size == "XL", models.Product.XL_price),
+                    (models.OrderItem.size == "XXL", models.Product.XXL_price),
+                    else_=0
+                )
+            ).label("total_price")
+        )
+        .join(models.User, models.Order.user_id == models.User.id)
+        .join(models.OrderItem, models.Order.id == models.OrderItem.order_id)
+        .join(models.Product, models.OrderItem.product_id == models.Product.id)
+        .group_by(models.Order.id, models.User.username)
+        .all()
+    )
+
+    orders = []
+    for r in results:
+        order_items = db.query(
+            models.OrderItem.quantity,
+            models.OrderItem.size,
+            models.OrderItem.product_id,
+            models.Product.name.label("product_name"),
+            models.Product.XS_price,
+            models.Product.S_price,
+            models.Product.M_price,
+            models.Product.L_price,
+            models.Product.XL_price,
+            models.Product.XXL_price,
+        ).join(
+            models.Product, models.OrderItem.product_id == models.Product.id
+        ).filter(
+            models.OrderItem.order_id == r.order_id
+        ).all()
+
+        products = [
+            schemas.OrderProduct(
+                product_name=item.product_name,
+                quantity=item.quantity,
+                size=item.size,
+                product_id=item.product_id,
+                price=(
+                    item.XS_price if item.size == "XS" else
+                    item.S_price if item.size == "S" else
+                    item.M_price if item.size == "M" else
+                    item.L_price if item.size == "L" else
+                    item.XL_price if item.size == "XL" else
+                    item.XXL_price if item.size == "XXL" else 0
+                ) * item.quantity
+            )
+            for item in order_items
+        ]
+
+        orders.append(
+            schemas.OrderResponse(
+                order_id=r.order_id,
+                user_id=r.user_id,
+                username=r.username,
+                status=r.status,
+                total_products=r.total_products,
+                total_price=int(r.total_price or 0),
+                products=products,
+                order_time=r.order_time
+            )
+        )
+    return orders
+
+def get_user_orders(db: Session, user_id: int):
+    """
+    Fetch all orders for a specific user with product details.
+    """
+    results = (
+        db.query(
+            models.Order.id.label("order_id"),
+            models.Order.user_id,
+            models.User.username,
+            models.Order.status,
+            models.Order.time.label("order_time"),
+            func.count(models.OrderItem.id).label("total_products"),
+            func.sum(
+                models.OrderItem.quantity * case(
+                    (models.OrderItem.size == "XS", models.Product.XS_price),
+                    (models.OrderItem.size == "S", models.Product.S_price),
+                    (models.OrderItem.size == "M", models.Product.M_price),
+                    (models.OrderItem.size == "L", models.Product.L_price),
+                    (models.OrderItem.size == "XL", models.Product.XL_price),
+                    (models.OrderItem.size == "XXL", models.Product.XXL_price),
+                    else_=0
+                )
+            ).label("total_price")
+        )
+        .join(models.User, models.Order.user_id == models.User.id)
+        .join(models.OrderItem, models.Order.id == models.OrderItem.order_id)
+        .join(models.Product, models.OrderItem.product_id == models.Product.id)
+        .filter(models.Order.user_id == user_id)
+        .group_by(models.Order.id, models.User.username)
+        .all()
+    )
+
+    orders = []
+    for r in results:
+        order_items = db.query(
+            models.OrderItem.quantity,
+            models.OrderItem.size,
+            models.OrderItem.product_id,
+            models.Product.name.label("product_name"),
+            models.Product.XS_price,
+            models.Product.S_price,
+            models.Product.M_price,
+            models.Product.L_price,
+            models.Product.XL_price,
+            models.Product.XXL_price,
+        ).join(
+            models.Product, models.OrderItem.product_id == models.Product.id
+        ).filter(
+            models.OrderItem.order_id == r.order_id
+        ).all()
+
+        products = [
+            schemas.OrderProduct(
+                product_name=item.product_name,
+                quantity=item.quantity,
+                size=item.size,
+                product_id=item.product_id,
+                price=(
+                    item.XS_price if item.size == "XS" else
+                    item.S_price if item.size == "S" else
+                    item.M_price if item.size == "M" else
+                    item.L_price if item.size == "L" else
+                    item.XL_price if item.size == "XL" else
+                    item.XXL_price if item.size == "XXL" else 0
+                ) * item.quantity
+            )
+            for item in order_items
+        ]
+
+        orders.append(
+            schemas.OrderResponse(
+                order_id=r.order_id,
+                user_id=r.user_id,
+                username=r.username,
+                status=r.status,
+                total_products=r.total_products,
+                total_price=int(r.total_price or 0),
+                products=products,
+                order_time=r.order_time
+            )
+        )
+    return orders
+
+def update_order_status(db: Session, order_id: int, status: str):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        return None
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    return order
+
+def get_order(db: Session, order_id: int):
+    from sqlalchemy.orm import joinedload
+    order = (
+        db.query(models.Order)
+        .filter(models.Order.id == order_id)
+        .options(joinedload(models.Order.user), joinedload(models.Order.items).joinedload(models.OrderItem.product))
+        .first()
+    )
+    if not order:
+        return None
+
+    total_products = len(order.items)
+    subquery = (
+        db.query(
+            models.OrderItem.order_id,
+            func.sum(
+                models.OrderItem.quantity * case(
+                    (models.OrderItem.size == "XS", models.Product.XS_price),
+                    (models.OrderItem.size == "S", models.Product.S_price),
+                    (models.OrderItem.size == "M", models.Product.M_price),
+                    (models.OrderItem.size == "L", models.Product.L_price),
+                    (models.OrderItem.size == "XL", models.Product.XL_price),
+                    (models.OrderItem.size == "XXL", models.Product.XXL_price),
+                    else_=0
+                )
+            ).label("order_total_price")
+        )
+        .join(models.Product, models.OrderItem.product_id == models.Product.id)
+        .filter(models.OrderItem.order_id == order_id)
+        .group_by(models.OrderItem.order_id)
+        .first()
+    )
+
+    products = [
+        schemas.OrderProduct(
+            product_name=item.product.name,
+            quantity=item.quantity,
+            size=item.size,
+            product_id=item.product_id,
+            price=int(
+                item.product.XS_price if item.size == "XS"
+                else item.product.S_price if item.size == "S"
+                else item.product.M_price if item.size == "M"
+                else item.product.L_price if item.size == "L"
+                else item.product.XL_price if item.size == "XL"
+                else item.product.XXL_price if item.size == "XXL"
+                else 0
+            ),
+        )
+        for item in order.items
+    ]
+
+    return schemas.OrderResponse(
+        order_id=order.id,
+        user_id=order.user_id,
+        username=order.user.username,
+        status=order.status,
+        total_products=total_products,
+        total_price=int(subquery.order_total_price or 0),
+        products=products,
+        order_time=order.time,  # Remove .date() since order.time is already a date
+    )
+
+# -------------------------
 # CREATE ORDER FROM CART
 # -------------------------
 def create_order_from_cart(db: Session, order: schemas.OrderCreate):
@@ -1626,33 +1593,34 @@ def create_order_from_cart(db: Session, order: schemas.OrderCreate):
     Create a new order for a user using all items in their cart and clear the cart.
     Returns the updated list of user orders.
     """
-    # Validate user existence
     user = db.query(models.User).filter(models.User.id == order.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Fetch cart items
     cart_items = db.query(models.Cart).filter(models.Cart.user_id == order.user_id).all()
     if not cart_items:
         raise HTTPException(status_code=400, detail="Cart is empty")
 
-    # Validate products
     for item in cart_items:
         product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
 
-    # Create new order
+    # Parse order_time as a full datetime and extract the date
+    try:
+        order_time = datetime.fromisoformat(order.order_time.replace('Z', '+00:00')).date()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid order_time format: {str(e)}")
+
     db_order = models.Order(
         user_id=order.user_id,
         status="pending",
-        time=date.fromisoformat(order.order_time)
+        time=order_time
     )
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
 
-    # Add order items from cart
     for item in cart_items:
         db_item = models.OrderItem(
             order_id=db_order.id,
@@ -1663,11 +1631,9 @@ def create_order_from_cart(db: Session, order: schemas.OrderCreate):
         db.add(db_item)
         db.commit()
 
-    # Clear user's cart
     db.query(models.Cart).filter(models.Cart.user_id == order.user_id).delete()
     db.commit()
 
-    # Return all user orders
     return get_user_orders(db, order.user_id)
 
 # -------------------------
