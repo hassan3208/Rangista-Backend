@@ -1023,7 +1023,7 @@ def get_reviews_by_product(db: Session, product_id: str):
         )
         .join(models.Review, models.User.id == models.Review.user_id)
         .filter(models.Review.product_id == product_id)
-        .order_by(models.Review.time.desc())
+        .order_by(models.Review.time.desc())  # Latest first
         .all()
     )
 
@@ -1032,7 +1032,7 @@ def get_reviews_by_product(db: Session, product_id: str):
             username=r.username,
             stars=r.stars,
             text=r.text,
-            time=r.time.date() if r.time else None,
+            time=r.time,  # Remove .date() since time is already compatible
         )
         for r in results
     ]
