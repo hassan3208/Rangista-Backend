@@ -8,7 +8,6 @@ import models, schemas, crud, auth, database
 import os
 from dotenv import load_dotenv
 import logging
-import resend
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -41,9 +40,6 @@ app.add_middleware(
 # Signup
 @app.post("/signup", response_model=schemas.UserResponse)
 def signup(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
-    
-    resend.api_key = os.getenv("RESEND_KEY")
-    
     db_user = crud.get_user_by_username(db, user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
