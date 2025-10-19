@@ -8,6 +8,7 @@ import models, schemas, crud, auth, database
 import os
 from dotenv import load_dotenv
 import logging
+from email_func import send_welcome
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +47,10 @@ def signup(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
     db_email = crud.get_user_by_email(db, user.email)
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db, user)
+    created_user = crud.create_user(db, user)
+    send_welcome(to_email=created_user.email, to_name=created_user.name)
+    logger.debug(f"New user created: {created_user.username} ({created_user.email})")
+    return created_user
 
 # Signin (login)
 @app.post("/signin", response_model=schemas.Token)
