@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import models, schemas, crud, auth, database
 import os
 from dotenv import load_dotenv
+from sqlalchemy.exc import OperationalError
 import logging
+import json
 from email_func import send_welcome
 
 # Set up logging
@@ -236,6 +238,33 @@ def read_all_products(db: Session = Depends(auth.get_db)):
     """
     products = crud.get_all_products_with_reviews(db)
     return products
+
+
+
+# -------------------------
+# CREATE PRODUCT
+# -------------------------
+
+@app.post("/products", response_model=schemas.ProductResponse)
+def create_product(product: schemas.ProductCreate, db: Session = Depends(auth.get_db)):
+    try:
+        db_product = crud.get_product_by_id(db, product.id)
+        if db_product:
+            raise HTTPException(status_code=400, detail="Product ID already exists")
+        crud.create_product(db, product)
+        new_product = crud.get_product_with_reviews(db, product.id)
+        if not new_product:
+            raise HTTPException(status_code=500, detail="Failed to retrieve created product")
+        return new_product
+    except OperationalError as e:
+        logger.error(f"Database error: {str(e)}")
+        raise HTTPException(status_code=503, detail="Database unavailable, please try again later")
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error for images field: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing product images")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # -------------------------
 # GET ALL REVIEWS FOR A PRODUCT

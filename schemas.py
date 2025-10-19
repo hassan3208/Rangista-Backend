@@ -168,3 +168,28 @@ class CartCreate(BaseModel):
 class OrderCreate(BaseModel):
     user_id: int
     order_time: str
+
+
+
+# -------------------------
+# PRODUCT CREATE SCHEMA
+# -------------------------
+class ProductCreate(BaseModel):
+    id: str
+    name: str
+    image: str
+    images: Optional[List[str]] = None
+    collection: str
+    XS_price: int
+    S_price: int
+    M_price: int
+    L_price: int
+    XL_price: int
+    XXL_price: int
+    XS_stock: int
+    S_stock: int
+    M_stock: int
+    L_stock: int
+    XL_stock: int
+    XXL_stock: int
+    kids: Optional[bool] = None

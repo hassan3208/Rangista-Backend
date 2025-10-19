@@ -173,7 +173,7 @@ class Product(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     image = Column(String)
-    images = Column(String)
+    images = Column(String,nullable=True)
     collection = Column(String)
     XS_price = Column(Integer)
     S_price = Column(Integer)
