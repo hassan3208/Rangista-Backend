@@ -8,8 +8,6 @@ import models, schemas, crud, auth, database
 import os
 from dotenv import load_dotenv
 import logging
-import resend
-
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -48,48 +46,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
     db_email = crud.get_user_by_email(db, user.email)
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    resend.api_key = os.getenv("RESEND_KEY")
-    
-    created_user = crud.create_user(db, user)
-    
-    # Email sending logic
-    with open("mail.html", "r", encoding="utf-8") as file:
-        html_content = file.read()
-
-    # Replace {{user_name}} with the actual user name
-    html_content = html_content.replace("{{user_name}}", user.name)
-
-    params: resend.Emails.SendParams = {
-        "from": "Rangista <onboarding@resend.dev>",
-        "to": [user.email],
-        "subject": "Welcome to Rangista",
-        "html": html_content
-    }
-
-    email = resend.Emails.send(params)
-
-    # # Extract status if present (works for dict responses or objects with attributes)
-    # status = None
-    # try:
-    #     if isinstance(email, dict):
-    #         status = email.get("status") or email.get("state") or email.get("delivery_status") or email.get("statusCode")
-    #     else:
-    #         status = getattr(email, "status", None) or getattr(email, "state", None) or getattr(email, "delivery_status", None)
-    # except Exception:
-    #     status = None
-
-    # logger.debug(email)
-    # if status:
-    #     logger.debug("email status:", status)
-    # else:
-    #     # Fallback hint if an id is present
-    #     if isinstance(email, dict) and email.get("id"):
-    #         logger.debug("email status: sent (id=" + str(email.get("id")) + ")")
-    #     else:
-    #         logger.debug("email status: unknown")
-    
-    return created_user
+    return crud.create_user(db, user)
 
 # Signin (login)
 @app.post("/signin", response_model=schemas.Token)
