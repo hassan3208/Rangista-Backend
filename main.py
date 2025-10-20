@@ -398,6 +398,20 @@ def check_review(
     reviewed = crud.has_user_reviewed_product(db, user_id, product_id)
     return {"reviewed": reviewed}
 
+
+
+# -------------------------
+# GET PRODUCT DESCRIPTION updatee
+# -------------------------
+@app.get("/products/{product_id}/description")
+def get_product_description(product_id: str, db: Session = Depends(auth.get_db)):
+    db_product = crud.get_product_by_id(db, product_id)
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"description": db_product.description or ""}
+
+
+
 @app.get("/")
 def read_root():
     return {"message": "Server is running!"}

@@ -1,0 +1,191 @@
+[33mcommit b52cf886927ba88c2257ab988da0615628e9ca0b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Mon Oct 20 16:34:02 2025 +0500
+
+    adbeck
+
+[33mcommit 23951877409b6b17123c0a22cc1c390117bba1fc[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Mon Oct 20 16:30:39 2025 +0500
+
+    add beck
+
+[33mcommit 4767f0d6e2ab1d1e6f1031ded09624d05b8089a7[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Mon Oct 20 16:22:02 2025 +0500
+
+    add descryption
+
+[33mcommit 7b577573294a8f27b996b0f0aaf02658abdf8728[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 20:39:13 2025 +0500
+
+    change email to plain text
+
+[33mcommit 26de56929df63a8eb104c20afc0f483a0a694659[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 12:16:03 2025 +0500
+
+    add new product
+
+[33mcommit dc9baa1ac9ccecc9d8f05b638d3a0e51f70fb86a[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 10:52:47 2025 +0500
+
+    update requ
+
+[33mcommit a124d8f454170c5d26436d26d0c60377e220fb8d[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 10:43:22 2025 +0500
+
+    update req
+
+[33mcommit efda12d327cb81023aa84c9cdc510e9844d1decf[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 10:31:48 2025 +0500
+
+    use google mail
+
+[33mcommit da40bd101664935fe663f4f3207361c15230a8aa[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 08:57:28 2025 +0500
+
+    beck
+
+[33mcommit 4f9d2a50c68342a72a33a9f088818377219aebba[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 08:56:25 2025 +0500
+
+    emain in main
+
+[33mcommit f2e78537cf31a0a00acf8dc380adc41dbb6b6e68[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 08:51:55 2025 +0500
+
+    beck
+
+[33mcommit 474524aa0880dbfd4f3c3cdf951be085a483625a[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sun Oct 19 08:50:04 2025 +0500
+
+    add user email logic
+
+[33mcommit 5a385da101304646c5d8d0e5f9d79f596dfde0af[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sat Oct 18 08:17:59 2025 +0500
+
+    update cors2
+
+[33mcommit 1018cff880e178064da9388ca9b452283c5e7b15[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Sat Oct 18 08:11:34 2025 +0500
+
+    update cors
+
+[33mcommit 14099909833a0e1edc9ff0e204a7ec780f2dcd0c[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Fri Oct 17 22:13:28 2025 +0500
+
+    update review issue
+
+[33mcommit b4a6c65cad55cd49a29ad35732d953d3cdd4614e[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Fri Oct 17 21:27:47 2025 +0500
+
+    update the database orders issue
+
+[33mcommit fa1f66cff1a590c06d479b2a6bd8ee9c8ae6940c[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Fri Oct 17 08:30:01 2025 +0500
+
+    update refresh token
+
+[33mcommit aa759b8ac03e8af7f4be6c0c96303461fc72ae73[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Wed Oct 15 20:44:12 2025 +0500
+
+    update database
+
+[33mcommit 4c21087fcb3097953f0cd2f6973fc20cabbfda01[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 21:22:34 2025 +0500
+
+    Update main.py
+
+[33mcommit e06eaa1aa3ba618005ad82d6f7d1600b5dd1d261[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 21:16:15 2025 +0500
+
+    Update CORS middleware to allow all origins
+
+[33mcommit 58476a9f733af74f47a6dc8a6c7acaf028852f22[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 21:12:51 2025 +0500
+
+    Update main.py
+
+[33mcommit 82fd18d900c0cde2d4b53aa0e5b596103b9eb695[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 21:06:20 2025 +0500
+
+    Update main.py
+
+[33mcommit ae864ed9e022a55735abd7c231a7c18af3bd2b5b[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:39:53 2025 +0500
+
+    Update main.py
+
+[33mcommit c8c4de66a2f0afe955371d74a188342a051379cb[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:39:33 2025 +0500
+
+    Update requirements.txt
+
+[33mcommit 8249b5e4d35be041083b04c9778ac198fc451646[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:28:51 2025 +0500
+
+    Update requirements.txt
+
+[33mcommit bc0ff7efc4d4a45dcc5e27debe7e6414a52141d3[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:27:03 2025 +0500
+
+    Fix formatting issue in requirements.txt
+
+[33mcommit d4cdf3ddadc1900ed329c18c4a2678afabdda49d[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:24:31 2025 +0500
+
+    Update requirements.txt
+
+[33mcommit 6e854bfd09dcbbf6bdd97639855f329fb3e92544[m
+Author: Hassan <hassanimran1226@gmail.com>
+Date:   Tue Oct 14 20:23:14 2025 +0500
+
+    Update requirements.txt
+
+[33mcommit 13a273f44062ffcc33e58bd04e371969ff5b0e47[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Tue Oct 14 20:15:17 2025 +0500
+
+    add requirement material jose
+
+[33mcommit c9b3d94e1222b393d73eae3567bd07b5db566a08[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Tue Oct 14 20:10:54 2025 +0500
+
+    add requirement material
+
+[33mcommit af40bdb4f65d06ae82b2f572be027fd459a9df9f[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Tue Oct 14 19:49:34 2025 +0500
+
+    add vercel material
+
+[33mcommit 3bd741b22f17f6a53764ccc1650513f9602e6f24[m
+Author: Hassan <itsmywork1019@gmail.com>
+Date:   Tue Oct 14 19:42:31 2025 +0500
+
+    Initial full project upload
