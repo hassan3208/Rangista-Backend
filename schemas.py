@@ -63,7 +63,6 @@ class ProductBase(BaseModel):
     image: str
     images: Optional[List[str]] = None
     collection: str
-    description: Optional[str] = None # updatee
 
 class ProductResponse(ProductBase):
     total_reviews: int
@@ -81,7 +80,6 @@ class ProductResponse(ProductBase):
     XL_stock: float
     XXL_stock: float
     kids: Optional[bool] = None
-    description: Optional[str] = None # updatee
 
     class Config:
         from_attributes = True
@@ -195,4 +193,3 @@ class ProductCreate(BaseModel):
     XL_stock: int
     XXL_stock: int
     kids: Optional[bool] = None
-    description: Optional[str] = None # updatee
