@@ -127,6 +127,7 @@ def get_all_products_with_reviews(db: Session):
             models.Product.XL_stock,
             models.Product.XXL_stock,
             models.Product.kids,
+            models.Product.description, # updatee
         )
         .outerjoin(models.Review, models.Product.id == models.Review.product_id)
         .group_by(models.Product.id)
@@ -164,6 +165,7 @@ def get_all_products_with_reviews(db: Session):
                 XL_stock=r.XL_stock,
                 XXL_stock=r.XXL_stock,
                 kids=r.kids,
+                description=r.description, # updatee
             )
         )
     return products
@@ -196,7 +198,8 @@ def create_product(db: Session, product: schemas.ProductCreate):
         L_stock=product.L_stock,
         XL_stock=product.XL_stock,
         XXL_stock=product.XXL_stock,
-        kids=product.kids
+        kids=product.kids,
+        description=product.description # updatee
     )
     db.add(db_product)
     db.commit()
@@ -229,6 +232,7 @@ def get_product_with_reviews(db: Session, product_id: str):
             models.Product.XL_stock,
             models.Product.XXL_stock,
             models.Product.kids,
+            models.Product.description, # updatee
         )
         .outerjoin(models.Review, models.Product.id == models.Review.product_id)
         .filter(models.Product.id == product_id)
@@ -267,6 +271,7 @@ def get_product_with_reviews(db: Session, product_id: str):
         XL_stock=result.XL_stock,
         XXL_stock=result.XXL_stock,
         kids=result.kids,
+        description=result.description, # updatee
     )
 
 

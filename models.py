@@ -188,6 +188,7 @@ class Product(Base):
     XL_stock = Column(Integer)
     XXL_stock = Column(Integer)
     kids = Column(Boolean)
+    description = Column(String, nullable=True) # updatee
 
     # Relationships
     reviews = relationship("Review", back_populates="product", cascade="all, delete")
