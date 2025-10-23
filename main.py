@@ -23,14 +23,15 @@ models.Base.metadata.create_all(bind=database.engine)
 origins = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
-    os.getenv("FRONTEND_URL", "https://rangista.vercel.app"),
+    "https://rangista.vercel.app",
+    "https://rangistawebsite.vercel.app",
 ]
 
 app = FastAPI(title='User Management API')
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
