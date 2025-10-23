@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, case
 from datetime import date
@@ -626,6 +626,8 @@ def get_all_orders(db: Session):
     """
     Fetch all orders with product details, total products, and total price.
     """
+    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    
     results = (
         db.query(
             models.Order.id.label("order_id"),
@@ -649,6 +651,7 @@ def get_all_orders(db: Session):
         .join(models.User, models.Order.user_id == models.User.id)
         .join(models.OrderItem, models.Order.id == models.OrderItem.order_id)
         .join(models.Product, models.OrderItem.product_id == models.Product.id)
+        .filter(models.Order.time >= thirty_days_ago)
         .group_by(models.Order.id, models.User.username)
         .all()
     )
