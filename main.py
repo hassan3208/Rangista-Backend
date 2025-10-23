@@ -11,6 +11,9 @@ from sqlalchemy.exc import OperationalError
 import logging
 import json
 from email_func import send_welcome
+from fastapi import Request
+
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -27,6 +30,7 @@ origins = [
     "https://rangistawebsite.vercel.app",
 ]
 
+
 app = FastAPI(title='User Management API')
 
 app.add_middleware(
@@ -37,6 +41,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
+
+
+
+@app.middleware("http")
+async def verify_origin(request: Request, call_next):
+    allowed_origins = origins
+    origin = request.headers.get("origin")
+    referer = request.headers.get("referer")
+
+    if origin not in allowed_origins and (referer is None or not any(o in referer for o in allowed_origins)):
+        return Response(
+            content="Access Denied: Unauthorized domain",
+            status_code=403
+        )
+
+    response = await call_next(request)
+    return response
 
 
 
