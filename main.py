@@ -25,7 +25,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 origins = [
     "http://localhost:8080",
-    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000",
     "https://rangista.vercel.app",
     "https://rangistawebsite.vercel.app",
 ]
@@ -46,20 +46,20 @@ app.add_middleware(
 
 
 
-@app.middleware("http")
-async def verify_origin(request: Request, call_next):
-    allowed_origins = origins
-    origin = request.headers.get("origin")
-    referer = request.headers.get("referer")
+# @app.middleware("http")
+# async def verify_origin(request: Request, call_next):
+#     allowed_origins = origins
+#     origin = request.headers.get("origin")
+#     referer = request.headers.get("referer")
 
-    if origin not in allowed_origins and (referer is None or not any(o in referer for o in allowed_origins)):
-        return Response(
-            content="Access Denied: Unauthorized domain",
-            status_code=403
-        )
+#     if origin not in allowed_origins and (referer is None or not any(o in referer for o in allowed_origins)):
+#         return Response(
+#             content="Access Denied: Unauthorized domain",
+#             status_code=403
+#         )
 
-    response = await call_next(request)
-    return response
+#     response = await call_next(request)
+#     return response
 
 
 
@@ -271,10 +271,11 @@ def read_all_products(db: Session = Depends(auth.get_db)):
 
 @app.post("/products", response_model=schemas.ProductResponse)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(auth.get_db)):
+    db_product = crud.get_product_by_id(db, product.id)
+    if db_product:
+        raise HTTPException(status_code=400, detail="Product ID already exists")
+    
     try:
-        db_product = crud.get_product_by_id(db, product.id)
-        if db_product:
-            raise HTTPException(status_code=400, detail="Product ID already exists")
         crud.create_product(db, product)
         new_product = crud.get_product_with_reviews(db, product.id)
         if not new_product:
